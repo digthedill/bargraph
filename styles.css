@@ -1,0 +1,7 @@
+.bar-box {
+  background-color: rgb(209, 162, 252);
+  position: flex;
+  width: 50%;
+  padding: 2rem;
+  margin: 0 auto;
+}
