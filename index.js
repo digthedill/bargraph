@@ -21,6 +21,23 @@ fetch(url)
       });
     };
 
+    const years = data.data.map((item) => {
+      let quarter;
+      const temp = item[0].substring(5, 7);
+
+      if (temp === "01") {
+        quarter = "Q1";
+      } else if (temp === "04") {
+        quarter = "Q2";
+      } else if (temp === "07") {
+        quarter = "Q3";
+      } else if (temp === "10") {
+        quarter = "Q4";
+      }
+
+      return item[0].substring(0, 4) + " " + quarter;
+    });
+
     parse();
 
     //grab the min and maxes
@@ -53,11 +70,24 @@ fetch(url)
 
     const linearScale = d3.scaleLinear().domain([0, maxGDP]).range([0, h]);
 
-    const scaledGDP = GDP.map((item) => {
+    let scaledGDP = [];
+    scaledGDP = GDP.map((item) => {
       return linearScale(item);
     });
+    const overlay = d3
+      .select(".canvas")
+      .append("div")
+      .attr("class", "overlay")
+      .style("opacity", 0);
+
+    const tooltip = d3
+      .select(".canvas")
+      .append("div")
+      .attr("id", "tooltip")
+      .style("opacity", 0);
+
     const svg = d3
-      .select("body")
+      .select(".canvas")
       .append("svg")
       .attr("class", "bar-box")
       .attr("width", w)
@@ -75,20 +105,21 @@ fetch(url)
       .attr("transform", "translate(0, " + (h - padding) + ")")
       .attr("id", "x-axis")
       .call(xAxis);
+
     svg
       .append("g")
       .attr("transform", "translate(" + (padding + 10) + ",0)")
       .attr("id", "y-axis")
       .call(yAxis);
-    console.log(scaledGDP);
+
     svg
       .selectAll("rect")
       .data(scaledGDP)
       .enter()
       .append("rect")
+      .attr("data-date", (d, i) => data.data[i][0])
+      .attr("data-gdp", (d, i) => data.data[i][1])
       .attr("class", "bar")
-      .attr("data-date", (d, i) => d[0])
-      //   .attr("data-gdp", (d, i) => )
       .attr("x", (d, i) => {
         return xScale(yearData[i]);
       })
@@ -96,7 +127,30 @@ fetch(url)
         return h - padding - d;
       })
       .attr("width", barWidth)
-      .attr("height", (d) => d);
+      .attr("height", (d) => d)
+      .attr("fill", "#f58c69")
+      .on("mouseover", (d, i) => {
+        overlay
+          .transition()
+          .duration(0)
+          .style("height", d + "px")
+          .style("width", barWidth + "px")
+          .style("opacity", 0.9)
+          .style("left", i * barWidth + 0 + "px")
+          .style("top", h - d + "px")
+          .style("transform", "translateX(60px)");
+        tooltip.transition().duration(200).style("opacity", 0.9);
 
+        tooltip
+          .text(`${d}`)
+          .style("left", i * barWidth + 30 + "px")
+          .style("top", h + "px")
+          .style("transform", "translateX(60px)")
+          .style("transform", "translateY(10px)");
+      })
+      .on("mouseout", () => {
+        tooltip.transition().duration(200).style("opacity", 0);
+        overlay.transition().duration(200).style("opacity", 0);
+      });
     //tool tip for hovering over bargraph
   });
