@@ -30,14 +30,16 @@ fetch(url)
     const maxGDP = d3.max(fullDataList.map((val) => val[1]));
     const minGDP = d3.min(fullDataList.map((val) => val[1]));
 
+    const GDP = fullDataList.map((item) => item[1]);
     //setup both scales:
 
     const padding = 30;
+    const barWidth = w / 275;
 
     const xScale = d3
       .scaleTime()
       .domain([minYear, maxYear])
-      .range([padding + 8, w - padding]);
+      .range([padding + 9, w - padding]);
 
     const yScale = d3
       .scaleLinear()
@@ -49,27 +51,52 @@ fetch(url)
     const xAxis = d3.axisBottom(xScale);
     const yAxis = d3.axisLeft(yScale);
 
+    const linearScale = d3.scaleLinear().domain([0, maxGDP]).range([0, h]);
+
+    const scaledGDP = GDP.map((item) => {
+      return linearScale(item);
+    });
     const svg = d3
       .select("body")
       .append("svg")
       .attr("class", "bar-box")
       .attr("width", w)
-      .attr("height", h);
+      .attr("height", h + 60);
+
+    svg
+      .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("x", -200)
+      .attr("y", 60)
+      .text("Gross Domestic Product");
+
     svg
       .append("g")
       .attr("transform", "translate(0, " + (h - padding) + ")")
+      .attr("id", "x-axis")
       .call(xAxis);
     svg
       .append("g")
       .attr("transform", "translate(" + (padding + 10) + ",0)")
+      .attr("id", "y-axis")
       .call(yAxis);
-    //   svg
-    //     .selectAll("rect")
-    //     .data(fullDataList)
-    //     .enter()
-    //     .append("rect")
-    //     .attr("x", (d) => d[0])
-    //     .attr("y", (d) => d[1])
-    //     .attr("width", 25)
-    //     .attr("height", d[1]);
+    console.log(scaledGDP);
+    svg
+      .selectAll("rect")
+      .data(scaledGDP)
+      .enter()
+      .append("rect")
+      .attr("class", "bar")
+      .attr("data-date", (d, i) => d[0])
+      //   .attr("data-gdp", (d, i) => )
+      .attr("x", (d, i) => {
+        return xScale(yearData[i]);
+      })
+      .attr("y", (d, i) => {
+        return h - padding - d;
+      })
+      .attr("width", barWidth)
+      .attr("height", (d) => d);
+
+    //tool tip for hovering over bargraph
   });
